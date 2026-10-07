@@ -1,0 +1,185 @@
+<UserControl x:Class="QuickLook.Plugin.PrprojViewer.ProjectView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:QuickLook.Plugin.PrprojViewer"
+             FontFamily="Segoe UI" FontSize="13"
+             Foreground="{DynamicResource WindowTextForeground}">
+    <UserControl.Resources>
+        <SolidColorBrush x:Key="Surface" Color="#80808080" Opacity="0.12" />
+        <SolidColorBrush x:Key="SurfaceHover" Color="#80808080" Opacity="0.22" />
+        <SolidColorBrush x:Key="Line" Color="#80808080" Opacity="0.25" />
+        <SolidColorBrush x:Key="OfflineBrush" Color="#E5484D" />
+        <SolidColorBrush x:Key="MovedBrush" Color="#D9922E" />
+        <FontFamily x:Key="Mono">Cascadia Mono, Consolas</FontFamily>
+
+        <Style x:Key="Muted" TargetType="TextBlock">
+            <Setter Property="Opacity" Value="0.6" />
+        </Style>
+
+        <Style x:Key="Tab" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource WindowTextForeground}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="bg" Background="Transparent" CornerRadius="6" Padding="14,6">
+                            <ContentPresenter TextElement.FontWeight="SemiBold" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="{StaticResource Surface}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="{StaticResource SurfaceHover}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="False">
+                                <Setter Property="Opacity" Value="0.65" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="Row" TargetType="ListBoxItem">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="bg" Background="Transparent" CornerRadius="6" Padding="10,6" Margin="0,1">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Background" Value="{StaticResource Surface}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="Pill" TargetType="Border">
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Padding" Value="8,1" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="16,8,16,12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- summary -->
+        <WrapPanel x:Name="Summary" Grid.Row="0" Margin="0,0,0,10" />
+
+        <!-- tabs -->
+        <DockPanel Grid.Row="1" Margin="0,0,0,8">
+            <CheckBox x:Name="OfflineOnly" DockPanel.Dock="Right" VerticalAlignment="Center"
+                      Foreground="{DynamicResource WindowTextForeground}" Focusable="False"
+                      Content="Only offline" Visibility="Collapsed"
+                      Checked="OfflineOnly_Changed" Unchecked="OfflineOnly_Changed" />
+            <StackPanel Orientation="Horizontal">
+                <RadioButton x:Name="TabSequences" Style="{StaticResource Tab}" GroupName="tabs" IsChecked="True" Checked="Tab_Checked" />
+                <RadioButton x:Name="TabMedia" Style="{StaticResource Tab}" GroupName="tabs" Margin="4,0,0,0" Checked="Tab_Checked" />
+            </StackPanel>
+        </DockPanel>
+
+        <Border Grid.Row="2" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="0,6,0,0">
+            <Grid>
+                <!-- sequences -->
+                <Grid x:Name="SequencesPanel" Grid.IsSharedSizeScope="True">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Margin="10,0,10,4" TextElement.FontSize="11">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="dur" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="res" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="fps" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="trk" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource Muted}" Text="SEQUENCE" />
+                        <TextBlock Grid.Column="1" Style="{StaticResource Muted}" Text="DURATION" Margin="24,0,0,0" />
+                        <TextBlock Grid.Column="2" Style="{StaticResource Muted}" Text="FRAME SIZE" Margin="24,0,0,0" />
+                        <TextBlock Grid.Column="3" Style="{StaticResource Muted}" Text="FRAME RATE" Margin="24,0,0,0" />
+                        <TextBlock Grid.Column="4" Style="{StaticResource Muted}" Text="TRACKS" Margin="24,0,0,0" />
+                    </Grid>
+                    <ListBox x:Name="SequenceList" Grid.Row="1" Background="Transparent" BorderThickness="0"
+                             ItemContainerStyle="{StaticResource Row}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type local:SequenceInfo}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="dur" />
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="res" />
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="fps" />
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="trk" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock VerticalAlignment="Center" Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
+                                    <TextBlock VerticalAlignment="Center" Grid.Column="1" Text="{Binding Duration}" FontFamily="{StaticResource Mono}" Margin="24,0,0,0" />
+                                    <TextBlock VerticalAlignment="Center" Grid.Column="2" Text="{Binding Resolution}" Margin="24,0,0,0" />
+                                    <TextBlock VerticalAlignment="Center" Grid.Column="3" Text="{Binding FrameRate}" Margin="24,0,0,0" />
+                                    <TextBlock VerticalAlignment="Center" Grid.Column="4" Text="{Binding Tracks}" FontFamily="{StaticResource Mono}" Style="{StaticResource Muted}" Margin="24,0,0,0" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+
+                <!-- media -->
+                <ListBox x:Name="MediaList" Visibility="Collapsed" Background="Transparent" BorderThickness="0"
+                         ItemContainerStyle="{StaticResource Row}"
+                         VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.ScrollUnit="Pixel"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type local:MediaInfo}">
+                            <Grid ToolTip="{Binding ToolTipText}" Background="Transparent" MouseLeftButtonDown="Media_MouseDown">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="52" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Border Background="{StaticResource Surface}" CornerRadius="4" Padding="0,2"
+                                        VerticalAlignment="Center" HorizontalAlignment="Left" Width="42">
+                                    <TextBlock Text="{Binding Ext}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" />
+                                </Border>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock x:Name="name" Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Folder}" FontSize="11.5" Style="{StaticResource Muted}" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <Border x:Name="pill" Grid.Column="2" Style="{StaticResource Pill}" Margin="12,0,0,0" Visibility="Collapsed">
+                                    <TextBlock Text="{Binding Note}" FontSize="11" FontWeight="SemiBold" Foreground="White" />
+                                </Border>
+                            </Grid>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Status}" Value="Offline">
+                                    <Setter TargetName="pill" Property="Visibility" Value="Visible" />
+                                    <Setter TargetName="pill" Property="Background" Value="{StaticResource OfflineBrush}" />
+                                    <Setter TargetName="name" Property="Foreground" Value="{StaticResource OfflineBrush}" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Status}" Value="Moved">
+                                    <Setter TargetName="pill" Property="Visibility" Value="Visible" />
+                                    <Setter TargetName="pill" Property="Background" Value="{StaticResource MovedBrush}" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock x:Name="Message" Visibility="Collapsed" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Style="{StaticResource Muted}" TextWrapping="Wrap" TextAlignment="Center" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
