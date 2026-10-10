@@ -2,6 +2,12 @@
 
 Previews Adobe Premiere Pro projects (`.prproj`) in [QuickLook](https://github.com/QL-Win/QuickLook), so you can check what's inside a project without opening Premiere.
 
+![media list](docs/screenshot.png)
+
+![sequences](docs/sequences.png)
+
+<sub>Screenshots show a made-up demo project.</sub>
+
 - **Sequences**: name, duration (timecode), frame size, frame rate and track count
 - **Media**: every imported file with its path, offline files first and in red
 - Files that aren't at the saved path but exist relative to the project (the whole folder was moved) show up as "Moved", since Premiere usually relinks those by itself
